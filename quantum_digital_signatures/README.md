@@ -234,6 +234,10 @@ An interactive Jupyter environment allows you to step through matrix calculation
 2. Step through the execution cells.
 3. Observe mathematical progression and visual representations of verification gaps dynamically.
 
+## Interactive Animation
+
+Open `animation/qds_animation.html` in any browser (Chrome, Edge, Firefox) to view a visually rich, interactive walkthrough of the entire QDS protocol. The animation contains 7 navigable scenes covering protocol overview, key generation with a Bloch sphere visualization, quantum state distribution, signing, swap-test verification with threshold bars, a forgery attempt simulation, and a protocol summary. No server or build step required.
+
 ## Performance Notes
 
 For the `fingerprint` phase family, simulation scales poorly with larger $n$ due to the statevector complexity size requiring $N=2^n$ dense complex values calculated at runtime.

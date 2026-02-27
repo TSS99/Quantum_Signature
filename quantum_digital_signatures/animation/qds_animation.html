@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Digital Signature Protocol - Interactive Animation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a1a;--bg2:#10102a;--cyan:#00e5ff;--purple:#b388ff;--pink:#ff4081;
+  --green:#69f0ae;--gold:#ffd740;--red:#ff5252;--text:#e0e0e0;--dim:#888;
+  --glow-cyan:0 0 20px rgba(0,229,255,.4);--glow-purple:0 0 20px rgba(179,136,255,.4);
+}
+html{font-size:16px}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;overflow:hidden;height:100vh;width:100vw}
+.app{display:flex;flex-direction:column;height:100vh}
+
+/* --- NAV BAR --- */
+.nav{display:flex;align-items:center;justify-content:space-between;padding:10px 30px;background:var(--bg2);border-bottom:1px solid rgba(0,229,255,.15);z-index:100;flex-shrink:0}
+.nav-title{font-size:.85rem;color:var(--cyan);font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.nav-dots{display:flex;gap:8px}
+.nav-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.15);cursor:pointer;transition:.3s}
+.nav-dot.active{background:var(--cyan);box-shadow:var(--glow-cyan)}
+.nav-dot:hover{background:var(--purple)}
+.nav-btns{display:flex;gap:10px}
+.nav-btn{background:none;border:1px solid rgba(255,255,255,.2);color:var(--text);padding:6px 18px;border-radius:6px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.8rem;transition:.3s}
+.nav-btn:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow-cyan)}
+.nav-btn:disabled{opacity:.3;cursor:default;border-color:rgba(255,255,255,.1)}
+.nav-btn:disabled:hover{box-shadow:none;color:var(--text)}
+.scene-counter{color:var(--dim);font-size:.75rem;font-family:'JetBrains Mono',monospace}
+
+/* --- SCENE CONTAINER --- */
+.scene-wrap{flex:1;position:relative;overflow:hidden}
+.scene{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .6s ease,transform .6s ease;transform:translateX(60px)}
+.scene.active{opacity:1;pointer-events:auto;transform:translateX(0)}
+.scene.exit-left{opacity:0;transform:translateX(-60px)}
+
+/* --- PARTICLES BG --- */
+#particles-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+/* --- COMMON --- */
+.scene-content{position:relative;z-index:1;max-width:1100px;width:90%;text-align:center}
+h1{font-size:2.6rem;font-weight:700;margin-bottom:.5rem;background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+h2{font-size:1.8rem;font-weight:600;margin-bottom:1.2rem;color:var(--cyan)}
+h3{font-size:1.1rem;font-weight:500;color:var(--purple);margin-bottom:.8rem}
+p,.desc{font-size:.92rem;line-height:1.7;color:var(--dim);max-width:750px;margin:0 auto .8rem}
+.tag{display:inline-block;font-size:.7rem;padding:3px 10px;border-radius:20px;border:1px solid;margin:4px;font-weight:500}
+.tag-cyan{border-color:var(--cyan);color:var(--cyan)}
+.tag-purple{border-color:var(--purple);color:var(--purple)}
+.tag-green{border-color:var(--green);color:var(--green)}
+.math{font-family:'JetBrains Mono',monospace;color:var(--gold);background:rgba(255,215,64,.08);padding:8px 16px;border-radius:8px;display:inline-block;margin:8px 0;font-size:.85rem;border:1px solid rgba(255,215,64,.15)}
+
+/* --- ROLES DIAGRAM (Scene 1) --- */
+.roles{display:flex;justify-content:center;gap:60px;margin:30px 0;flex-wrap:wrap}
+.role-card{width:180px;padding:24px 16px;border-radius:16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);transition:.4s;position:relative;overflow:hidden}
+.role-card::before{content:'';position:absolute;inset:-2px;border-radius:18px;background:linear-gradient(135deg,transparent 40%,var(--cyan) 100%);opacity:0;transition:.4s;z-index:-1}
+.role-card:hover::before{opacity:.15}
+.role-card:hover{border-color:rgba(0,229,255,.3);transform:translateY(-4px)}
+.role-icon{font-size:2.4rem;margin-bottom:10px;display:block}
+.role-name{font-weight:600;font-size:1rem;margin-bottom:6px;color:var(--text)}
+.role-desc{font-size:.75rem;color:var(--dim);line-height:1.5}
+
+/* --- TIMELINE (Scene 1) --- */
+.timeline{display:flex;justify-content:center;align-items:flex-start;gap:0;margin:30px auto;max-width:900px}
+.tl-step{flex:1;text-align:center;position:relative}
+.tl-dot{width:14px;height:14px;border-radius:50%;margin:0 auto 8px;position:relative;z-index:1}
+.tl-step:not(:last-child)::after{content:'';position:absolute;top:6px;left:calc(50% + 7px);width:calc(100% - 14px);height:2px;background:linear-gradient(90deg,var(--cyan),var(--purple));opacity:.3}
+.tl-label{font-size:.72rem;font-weight:600;color:var(--text);margin-bottom:4px}
+.tl-sub{font-size:.65rem;color:var(--dim)}
+
+/* --- BLOCH SPHERE (Scene 2) --- */
+.bloch-area{display:flex;align-items:center;justify-content:center;gap:50px;margin:20px 0;flex-wrap:wrap}
+.bloch-container{position:relative;width:280px;height:280px}
+#blochCanvas{border-radius:50%;background:rgba(255,255,255,.02)}
+.key-display{text-align:left;max-width:340px}
+.key-row{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:.82rem}
+.key-label{color:var(--dim);min-width:100px}
+.key-val{font-family:'JetBrains Mono',monospace;color:var(--cyan);background:rgba(0,229,255,.08);padding:3px 10px;border-radius:6px;font-size:.8rem}
+.gen-btn{background:linear-gradient(135deg,rgba(0,229,255,.15),rgba(179,136,255,.15));border:1px solid rgba(0,229,255,.3);color:var(--cyan);padding:10px 24px;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:.85rem;margin-top:12px;transition:.3s}
+.gen-btn:hover{box-shadow:var(--glow-cyan);transform:translateY(-2px)}
+
+/* --- DISTRIBUTION (Scene 3) --- */
+.dist-diagram{position:relative;width:100%;max-width:700px;height:300px;margin:20px auto}
+.entity{position:absolute;text-align:center;width:100px}
+.entity-circle{width:70px;height:70px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto 8px;border:2px solid}
+.entity-name{font-size:.8rem;font-weight:600}
+.entity.alice{top:50%;left:5%;transform:translateY(-50%)}
+.entity.alice .entity-circle{border-color:var(--pink);box-shadow:0 0 15px rgba(255,64,129,.25)}
+.entity.bob{top:10%;right:5%}
+.entity.bob .entity-circle{border-color:var(--cyan);box-shadow:0 0 15px rgba(0,229,255,.25)}
+.entity.charlie{bottom:10%;right:5%}
+.entity.charlie .entity-circle{border-color:var(--purple);box-shadow:0 0 15px rgba(179,136,255,.25)}
+#distCanvas{position:absolute;inset:0;z-index:0}
+.copy-counter{position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);border:1px solid var(--gold);border-radius:8px;padding:6px 14px;font-size:.75rem;color:var(--gold);font-family:'JetBrains Mono',monospace}
+
+/* --- SIGNING (Scene 4) --- */
+.sign-flow{display:flex;align-items:center;justify-content:center;gap:30px;margin:20px 0;flex-wrap:wrap}
+.sign-box{padding:20px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.02);min-width:180px;transition:.4s}
+.sign-box.highlighted{border-color:var(--green);box-shadow:0 0 20px rgba(105,240,174,.2)}
+.sign-arrow{font-size:1.4rem;color:var(--dim)}
+.bit-selector{display:flex;gap:10px;justify-content:center;margin:10px 0}
+.bit-btn{width:50px;height:50px;border-radius:10px;border:2px solid rgba(255,255,255,.15);background:rgba(255,255,255,.03);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:.3s}
+.bit-btn.selected{border-color:var(--green);color:var(--green);box-shadow:0 0 15px rgba(105,240,174,.3)}
+.bit-btn:hover{border-color:var(--cyan)}
+.key-stream{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:10px 0}
+.key-chip{font-size:.6rem;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;background:rgba(105,240,174,.1);color:var(--green);border:1px solid rgba(105,240,174,.2)}
+
+/* --- SWAP TEST (Scene 5) --- */
+.verify-area{display:flex;gap:30px;justify-content:center;align-items:flex-start;flex-wrap:wrap;margin:20px 0}
+.circuit-box{background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:20px;min-width:320px}
+#circuitCanvas{display:block;margin:0 auto}
+.threshold-box{min-width:300px}
+.bar-container{position:relative;width:100%;height:30px;background:rgba(255,255,255,.05);border-radius:6px;overflow:hidden;margin:10px 0;border:1px solid rgba(255,255,255,.08)}
+.bar-fill{height:100%;border-radius:6px;transition:width 1s ease;background:linear-gradient(90deg,var(--green),var(--gold),var(--red))}
+.threshold-marker{position:absolute;top:0;height:100%;width:2px;z-index:2}
+.threshold-marker.c1{background:var(--cyan)}
+.threshold-marker.c2{background:var(--pink)}
+.marker-label{position:absolute;top:-18px;font-size:.6rem;font-family:'JetBrains Mono',monospace;white-space:nowrap;transform:translateX(-50%)}
+.outcome-badge{font-size:1.1rem;font-weight:700;padding:8px 20px;border-radius:8px;display:inline-block;margin-top:8px}
+.outcome-badge.one-acc{background:rgba(105,240,174,.15);color:var(--green);border:1px solid var(--green)}
+.outcome-badge.zero-acc{background:rgba(255,215,64,.15);color:var(--gold);border:1px solid var(--gold)}
+.outcome-badge.rej{background:rgba(255,82,82,.15);color:var(--red);border:1px solid var(--red)}
+
+/* --- FORGERY (Scene 6) --- */
+.forgery-area{display:flex;gap:30px;justify-content:center;align-items:center;flex-wrap:wrap;margin:20px 0}
+.gauge-container{position:relative;width:200px;height:200px}
+#gaugeCanvas{display:block}
+.gauge-label{position:absolute;bottom:30px;left:50%;transform:translateX(-50%);font-size:1.2rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stamp{font-size:1.4rem;font-weight:700;color:var(--red);border:3px solid var(--red);padding:10px 24px;border-radius:8px;transform:rotate(-12deg);opacity:0;transition:opacity .8s;letter-spacing:2px}
+.stamp.show{opacity:1;animation:stampSlam .4s ease-out}
+@keyframes stampSlam{0%{transform:rotate(-12deg) scale(2);opacity:0}100%{transform:rotate(-12deg) scale(1);opacity:1}}
+
+/* --- SUMMARY (Scene 7) --- */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:20px 0}
+.summary-card{padding:20px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);text-align:left;transition:.3s}
+.summary-card:hover{border-color:var(--cyan);transform:translateY(-3px)}
+.summary-card h4{font-size:.9rem;color:var(--cyan);margin-bottom:6px}
+.summary-card p{font-size:.78rem;color:var(--dim);line-height:1.5}
+
+/* --- ANIMATIONS --- */
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+@keyframes glow-border{0%,100%{box-shadow:0 0 5px var(--cyan)}50%{box-shadow:0 0 25px var(--cyan)}}
+.float{animation:float 3s ease-in-out infinite}
+.pulse{animation:pulse 2s ease-in-out infinite}
+</style>
+</head>
+<body>
+<canvas id="particles-canvas"></canvas>
+<div class="app">
+
+<!-- NAV -->
+<nav class="nav">
+  <span class="nav-title">QDS Protocol Simulator</span>
+  <div class="nav-dots" id="navDots"></div>
+  <div style="display:flex;align-items:center;gap:14px">
+    <span class="scene-counter" id="sceneCounter">1 / 7</span>
+    <div class="nav-btns">
+      <button class="nav-btn" id="prevBtn" disabled>Prev</button>
+      <button class="nav-btn" id="nextBtn">Next</button>
+    </div>
+  </div>
+</nav>
+
+<!-- SCENES -->
+<div class="scene-wrap">
+
+<!-- SCENE 1: Overview -->
+<div class="scene active" id="scene1">
+<div class="scene-content">
+  <h1>Quantum Digital Signatures</h1>
+  <p>Gottesman-Chuang Protocol -- Interactive Walkthrough</p>
+  <p class="desc">A signature scheme where quantum mechanics guarantees unforgeability and non-repudiation, even against computationally unbounded adversaries (within copy limits).</p>
+  <div class="roles">
+    <div class="role-card float" style="animation-delay:0s"><span class="role-icon">A</span><div class="role-name" style="color:var(--pink)">Alice</div><div class="role-desc">Signer. Generates private keys and distributes quantum public keys.</div></div>
+    <div class="role-card float" style="animation-delay:.4s"><span class="role-icon">B</span><div class="role-name" style="color:var(--cyan)">Bob</div><div class="role-desc">Recipient. Receives quantum public keys and verifies signatures.</div></div>
+    <div class="role-card float" style="animation-delay:.8s"><span class="role-icon">C</span><div class="role-name" style="color:var(--purple)">Charlie</div><div class="role-desc">Recipient. Can also verify forwarded (transferred) signatures.</div></div>
+  </div>
+  <div class="timeline">
+    <div class="tl-step"><div class="tl-dot" style="background:var(--pink)"></div><div class="tl-label">Key Gen</div><div class="tl-sub">Alice creates keys</div></div>
+    <div class="tl-step"><div class="tl-dot" style="background:var(--gold)"></div><div class="tl-label">Distribute</div><div class="tl-sub">Send quantum states</div></div>
+    <div class="tl-step"><div class="tl-dot" style="background:var(--green)"></div><div class="tl-label">Sign</div><div class="tl-sub">Reveal classical key</div></div>
+    <div class="tl-step"><div class="tl-dot" style="background:var(--cyan)"></div><div class="tl-label">Verify</div><div class="tl-sub">Swap test + threshold</div></div>
+    <div class="tl-step"><div class="tl-dot" style="background:var(--purple)"></div><div class="tl-label">Decide</div><div class="tl-sub">ACC or REJ</div></div>
+  </div>
+</div>
+</div>
+
+<!-- SCENE 2: Key Generation -->
+<div class="scene" id="scene2">
+<div class="scene-content">
+  <h2>Phase 1 -- Key Generation</h2>
+  <p class="desc">Alice picks a random L-bit classical key k and maps it to a quantum state using a Quantum One-Way Function.</p>
+  <div class="bloch-area">
+    <div class="bloch-container"><canvas id="blochCanvas" width="280" height="280"></canvas></div>
+    <div class="key-display">
+      <h3>angle1q Family</h3>
+      <div class="math">|f_k> = cos(j*theta)|0> + sin(j*theta)|1></div>
+      <div class="key-row"><span class="key-label">L (bits):</span><span class="key-val" id="dispL">8</span></div>
+      <div class="key-row"><span class="key-label">theta:</span><span class="key-val" id="dispTheta">pi/256</span></div>
+      <div class="key-row"><span class="key-label">key k:</span><span class="key-val" id="dispK">--</span></div>
+      <div class="key-row"><span class="key-label">j:</span><span class="key-val" id="dispJ">--</span></div>
+      <div class="key-row"><span class="key-label">angle:</span><span class="key-val" id="dispAngle">--</span></div>
+      <button class="gen-btn" id="genKeyBtn">Generate Random Key</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SCENE 3: Distribution -->
+<div class="scene" id="scene3">
+<div class="scene-content">
+  <h2>Phase 2 -- Distribution</h2>
+  <p class="desc">Alice sends quantum public key copies to Bob and Charlie. The No-Cloning Theorem limits copies to T_max.</p>
+  <div class="dist-diagram">
+    <canvas id="distCanvas" width="700" height="300"></canvas>
+    <div class="entity alice"><div class="entity-circle" style="border-color:var(--pink)">A</div><div class="entity-name" style="color:var(--pink)">Alice</div></div>
+    <div class="entity bob"><div class="entity-circle" style="border-color:var(--cyan)">B</div><div class="entity-name" style="color:var(--cyan)">Bob</div></div>
+    <div class="entity charlie"><div class="entity-circle" style="border-color:var(--purple)">C</div><div class="entity-name" style="color:var(--purple)">Charlie</div></div>
+    <div class="copy-counter">Copies sent: <span id="copyCount">0</span> / <span id="copyMax">4</span></div>
+  </div>
+  <button class="gen-btn" id="sendCopyBtn">Send Quantum Copy</button>
+  <div style="margin-top:12px"><span class="tag tag-cyan">No-Cloning Enforced</span><span class="tag tag-purple">T_max = 4</span></div>
+</div>
+</div>
+
+<!-- SCENE 4: Signing -->
+<div class="scene" id="scene4">
+<div class="scene-content">
+  <h2>Phase 3 -- Signing</h2>
+  <p class="desc">Alice chooses the message bit b to sign, then reveals the corresponding M classical private keys.</p>
+  <div class="sign-flow">
+    <div class="sign-box" id="signAlice"><h3 style="color:var(--pink)">Alice</h3><p style="font-size:.8rem;color:var(--dim)">Choose bit to sign:</p>
+      <div class="bit-selector"><button class="bit-btn" data-bit="0" id="bit0">0</button><button class="bit-btn" data-bit="1" id="bit1">1</button></div>
+    </div>
+    <div class="sign-arrow" id="signArrow" style="opacity:.2">---></div>
+    <div class="sign-box" id="signBob"><h3 style="color:var(--cyan)">Bob</h3><p style="font-size:.8rem;color:var(--dim)">Receives:</p>
+      <div id="bobReceived" style="font-size:.8rem;color:var(--dim)">Waiting...</div>
+    </div>
+  </div>
+  <div id="keyStreamArea" style="display:none"><p style="font-size:.75rem;color:var(--dim);margin-top:8px">Classical keys revealed (k_b^1 ... k_b^M):</p><div class="key-stream" id="keyStream"></div></div>
+</div>
+</div>
+
+<!-- SCENE 5: Verification -->
+<div class="scene" id="scene5">
+<div class="scene-content">
+  <h2>Phase 4 -- Verification</h2>
+  <p class="desc">Bob runs M swap tests comparing revealed keys against stored quantum states, then applies thresholds c1, c2.</p>
+  <div class="verify-area">
+    <div class="circuit-box"><h3>Swap Test Circuit</h3><canvas id="circuitCanvas" width="320" height="180"></canvas>
+      <div class="math" style="font-size:.75rem;margin-top:8px">P(anc=0) = (1 + |&lt;phi|psi&gt;|^2) / 2</div>
+    </div>
+    <div class="threshold-box"><h3>Mismatch Counter s_j</h3>
+      <div class="bar-container">
+        <div class="bar-fill" id="barFill" style="width:0%"></div>
+        <div class="threshold-marker c1" id="markerC1" style="left:5%"><span class="marker-label" style="color:var(--cyan)">c1</span></div>
+        <div class="threshold-marker c2" id="markerC2" style="left:20%"><span class="marker-label" style="color:var(--pink)">c2</span></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--dim)"><span>0</span><span>M = 64</span></div>
+      <div id="outcomeArea" style="margin-top:14px">
+        <button class="gen-btn" id="runVerifyBtn">Run Verification</button>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- SCENE 6: Forgery -->
+<div class="scene" id="scene6">
+<div class="scene-content">
+  <h2>Forgery Attempt</h2>
+  <p class="desc">Eve intercepts T copies and tries to guess Alice's private key. Her success probability drops as the protocol parameters grow.</p>
+  <div class="forgery-area">
+    <div><div class="gauge-container"><canvas id="gaugeCanvas" width="200" height="200"></canvas><div class="gauge-label" id="gaugeLabel" style="color:var(--red)">0%</div></div><p style="font-size:.75rem;color:var(--dim);margin-top:6px">Eve's success probability</p></div>
+    <div style="text-align:left;max-width:320px">
+      <h3>Why forgery fails</h3>
+      <p style="font-size:.82rem;line-height:1.7;color:var(--dim)">1. Eve has only T copies (no-cloning enforced).</p>
+      <p style="font-size:.82rem;line-height:1.7;color:var(--dim)">2. Measuring destroys state information.</p>
+      <p style="font-size:.82rem;line-height:1.7;color:var(--dim)">3. With L-bit keys, 2^L possible values vs. T copies yield negligible guessing advantage.</p>
+      <div class="stamp" id="forgeStamp">FORGERY REJECTED</div>
+    </div>
+  </div>
+  <button class="gen-btn" id="runForgeryBtn">Simulate Forgery Attack</button>
+</div>
+</div>
+
+<!-- SCENE 7: Summary -->
+<div class="scene" id="scene7">
+<div class="scene-content">
+  <h2>Protocol Properties</h2>
+  <p class="desc">The Gottesman-Chuang QDS protocol achieves these properties within the simulator's assumptions.</p>
+  <div class="summary-grid">
+    <div class="summary-card"><h4>Unforgeability</h4><p>Limited copies and quantum measurement disturbance prevent adversaries from reconstructing private keys.</p></div>
+    <div class="summary-card"><h4>Transferability</h4><p>The c1 / c2 gap ensures that if Bob accepts (ONE_ACC), Charlie will also accept the forwarded signature.</p></div>
+    <div class="summary-card"><h4>Non-Repudiation</h4><p>Distributed swap tests during distribution prevent Alice from sending inconsistent public keys.</p></div>
+    <div class="summary-card"><h4>Single-Use</h4><p>Quantum states are consumed on verification. Each key set can sign exactly one bit.</p></div>
+    <div class="summary-card"><h4>Copy Limit (T_max)</h4><p>Enforced in the simulator to model the no-cloning theorem. Real hardware enforces this physically.</p></div>
+    <div class="summary-card"><h4>Noise Tolerance</h4><p>Nonzero c1 threshold absorbs realistic hardware noise without rejecting valid signatures.</p></div>
+  </div>
+  <div style="margin-top:20px"><span class="tag tag-cyan">Simulator Only</span><span class="tag tag-purple">Not Production Crypto</span><span class="tag tag-green">Educational Tool</span></div>
+</div>
+</div>
+
+</div><!-- scene-wrap -->
+</div><!-- app -->
+
+<script>
+// ====== PARTICLES BACKGROUND ======
+(function(){
+  const c=document.getElementById('particles-canvas'),ctx=c.getContext('2d');
+  let w,h,particles=[];
+  function resize(){w=c.width=window.innerWidth;h=c.height=window.innerHeight}
+  window.addEventListener('resize',resize);resize();
+  for(let i=0;i<60;i++)particles.push({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.5+.5,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,o:Math.random()*.4+.1});
+  function draw(){ctx.clearRect(0,0,w,h);particles.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(0,229,255,${p.o})`;ctx.fill()});requestAnimationFrame(draw)}
+  draw();
+})();
+
+// ====== SCENE NAVIGATION ======
+const totalScenes=7;let cur=1;
+const prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn'),counter=document.getElementById('sceneCounter'),dotsEl=document.getElementById('navDots');
+for(let i=1;i<=totalScenes;i++){const d=document.createElement('div');d.className='nav-dot'+(i===1?' active':'');d.addEventListener('click',()=>goTo(i));dotsEl.appendChild(d)}
+function goTo(n){
+  if(n<1||n>totalScenes||n===cur)return;
+  const old=document.getElementById('scene'+cur),nw=document.getElementById('scene'+n);
+  old.classList.remove('active');old.classList.add(n>cur?'exit-left':'');
+  setTimeout(()=>old.classList.remove('exit-left'),600);
+  nw.classList.add('active');cur=n;
+  prevBtn.disabled=cur===1;nextBtn.disabled=cur===totalScenes;
+  counter.textContent=cur+' / '+totalScenes;
+  dotsEl.querySelectorAll('.nav-dot').forEach((d,i)=>d.classList.toggle('active',i+1===cur));
+  if(cur===2)startBloch();if(cur===3)resetDist();if(cur===5)drawCircuit();if(cur===6)resetForgery();
+}
+prevBtn.addEventListener('click',()=>goTo(cur-1));
+nextBtn.addEventListener('click',()=>goTo(cur+1));
+document.addEventListener('keydown',e=>{if(e.key==='ArrowRight')goTo(cur+1);if(e.key==='ArrowLeft')goTo(cur-1)});
+
+// ====== SCENE 2: BLOCH SPHERE ======
+let blochAngle=0,blochAnim=null,currentJ=0;
+function startBloch(){if(blochAnim)return;drawBloch();blochAnim=requestAnimationFrame(function loop(){drawBloch();blochAnim=requestAnimationFrame(loop)})}
+function drawBloch(){
+  const cv=document.getElementById('blochCanvas'),cx=cv.getContext('2d'),W=cv.width,H=cv.height,R=110,mx=W/2,my=H/2;
+  cx.clearRect(0,0,W,H);
+  // sphere outline
+  cx.strokeStyle='rgba(0,229,255,.2)';cx.lineWidth=1;cx.beginPath();cx.arc(mx,my,R,0,Math.PI*2);cx.stroke();
+  // equator ellipse
+  cx.beginPath();cx.ellipse(mx,my,R,R*.3,0,0,Math.PI*2);cx.strokeStyle='rgba(179,136,255,.15)';cx.stroke();
+  // axes
+  cx.strokeStyle='rgba(255,255,255,.1)';cx.beginPath();cx.moveTo(mx,my-R-10);cx.lineTo(mx,my+R+10);cx.stroke();
+  cx.beginPath();cx.moveTo(mx-R-10,my);cx.lineTo(mx+R+10,my);cx.stroke();
+  // labels
+  cx.font='12px JetBrains Mono';cx.fillStyle='rgba(0,229,255,.7)';cx.fillText('|0>',mx+4,my-R-12);cx.fillText('|1>',mx+4,my+R+18);
+  // state vector
+  const a=currentJ*(Math.PI/256);
+  const sx=mx+R*Math.sin(2*a)*Math.cos(blochAngle),sy=my-R*Math.cos(2*a);
+  cx.strokeStyle='var(--green)';cx.lineWidth=2;cx.beginPath();cx.moveTo(mx,my);cx.lineTo(sx,sy);cx.stroke();
+  cx.beginPath();cx.arc(sx,sy,5,0,Math.PI*2);cx.fillStyle='#69f0ae';cx.fill();cx.shadowColor='#69f0ae';cx.shadowBlur=10;cx.fill();cx.shadowBlur=0;
+  blochAngle+=.015;
+}
+document.getElementById('genKeyBtn').addEventListener('click',function(){
+  const L=8,j=Math.floor(Math.random()*256),k=j.toString(2).padStart(L,'0'),theta=Math.PI/256,angle=j*theta;
+  currentJ=j;
+  document.getElementById('dispK').textContent=k;document.getElementById('dispJ').textContent=j;
+  document.getElementById('dispAngle').textContent=(angle).toFixed(4)+' rad';
+});
+
+// ====== SCENE 3: DISTRIBUTION ======
+let copyCount=0;const copyMax=4;let distParticles=[];
+function resetDist(){copyCount=0;distParticles=[];document.getElementById('copyCount').textContent='0'}
+document.getElementById('sendCopyBtn').addEventListener('click',function(){
+  if(copyCount>=copyMax)return;copyCount++;document.getElementById('copyCount').textContent=copyCount;
+  const target=copyCount%2===1?{x:580,y:60}:{x:580,y:230};
+  distParticles.push({x:100,y:140,tx:target.x,ty:target.y,t:0,color:copyCount%2===1?'0,229,255':'179,136,255'});
+  if(copyCount>=copyMax)this.textContent='T_max reached';
+});
+(function animDist(){
+  const cv=document.getElementById('distCanvas');if(!cv)return requestAnimationFrame(animDist);
+  const cx=cv.getContext('2d');cx.clearRect(0,0,700,300);
+  // draw lines
+  cx.strokeStyle='rgba(255,255,255,.06)';cx.lineWidth=1;cx.setLineDash([4,4]);
+  cx.beginPath();cx.moveTo(130,150);cx.lineTo(560,70);cx.stroke();
+  cx.beginPath();cx.moveTo(130,150);cx.lineTo(560,240);cx.stroke();
+  cx.setLineDash([]);
+  // animate particles
+  distParticles.forEach(p=>{if(p.t<1){p.t+=.012;const px=p.x+(p.tx-p.x)*p.t,py=p.y+(p.ty-p.y)*p.t;
+    cx.beginPath();cx.arc(px,py,4,0,Math.PI*2);cx.fillStyle=`rgba(${p.color},.9)`;cx.shadowColor=`rgba(${p.color},1)`;cx.shadowBlur=12;cx.fill();cx.shadowBlur=0;
+    // trail
+    for(let i=1;i<=5;i++){const tt=Math.max(0,p.t-i*.015),tpx=p.x+(p.tx-p.x)*tt,tpy=p.y+(p.ty-p.y)*tt;cx.beginPath();cx.arc(tpx,tpy,2,0,Math.PI*2);cx.fillStyle=`rgba(${p.color},${.3-i*.05})`;cx.fill()}
+  }});
+  requestAnimationFrame(animDist);
+})();
+
+// ====== SCENE 4: SIGNING ======
+document.querySelectorAll('.bit-btn').forEach(btn=>{btn.addEventListener('click',function(){
+  document.querySelectorAll('.bit-btn').forEach(b=>b.classList.remove('selected'));this.classList.add('selected');
+  const b=this.dataset.bit;document.getElementById('signArrow').style.opacity='1';
+  document.getElementById('signBob').classList.add('highlighted');
+  document.getElementById('bobReceived').innerHTML='bit = <strong style="color:var(--green)">'+b+'</strong> + M private keys';
+  const ks=document.getElementById('keyStream');ks.innerHTML='';
+  for(let i=0;i<16;i++){const chip=document.createElement('span');chip.className='key-chip';chip.textContent='k_'+b+'^'+(i+1);ks.appendChild(chip)}
+  document.getElementById('keyStreamArea').style.display='block';
+})});
+
+// ====== SCENE 5: CIRCUIT + VERIFY ======
+function drawCircuit(){
+  const cv=document.getElementById('circuitCanvas'),cx=cv.getContext('2d'),W=320,H=180;cx.clearRect(0,0,W,H);
+  cx.strokeStyle='rgba(255,255,255,.3)';cx.lineWidth=1.5;
+  const lines=[40,90,140];const labels=['anc','|phi>','|psi>'];
+  lines.forEach((y,i)=>{cx.beginPath();cx.moveTo(30,y);cx.lineTo(290,y);cx.stroke();cx.font='11px JetBrains Mono';cx.fillStyle='rgba(255,255,255,.5)';cx.fillText(labels[i],0,y+4)});
+  // H gates
+  function hGate(x,y){cx.strokeStyle='var(--cyan)';cx.strokeRect(x-12,y-12,24,24);cx.fillStyle='var(--cyan)';cx.font='bold 14px JetBrains Mono';cx.fillText('H',x-6,y+5)}
+  hGate(80,40);hGate(240,40);
+  // CSWAP
+  cx.fillStyle='var(--purple)';cx.beginPath();cx.arc(160,40,4,0,Math.PI*2);cx.fill();
+  cx.strokeStyle='var(--purple)';cx.setLineDash([3,3]);cx.beginPath();cx.moveTo(160,44);cx.lineTo(160,140);cx.stroke();cx.setLineDash([]);
+  cx.strokeStyle='var(--green)';cx.lineWidth=2;
+  function swapX(x,y){cx.beginPath();cx.moveTo(x-8,y-8);cx.lineTo(x+8,y+8);cx.moveTo(x+8,y-8);cx.lineTo(x-8,y+8);cx.stroke()}
+  swapX(160,90);swapX(160,140);
+  // measure
+  cx.strokeStyle='var(--gold)';cx.lineWidth=1.5;cx.strokeRect(268,28,24,24);cx.beginPath();cx.arc(280,42,6,Math.PI,0);cx.stroke();cx.beginPath();cx.moveTo(280,42);cx.lineTo(284,32);cx.stroke();
+}
+document.getElementById('runVerifyBtn').addEventListener('click',function(){
+  const sj=Math.floor(Math.random()*5);const M=64;const pct=(sj/M)*100;
+  document.getElementById('barFill').style.width=Math.max(pct,1.5)+'%';
+  let outcome,cls;
+  if(sj<=3){outcome='ONE_ACC';cls='one-acc'}else if(sj>=13){outcome='REJ';cls='rej'}else{outcome='ZERO_ACC';cls='zero-acc'}
+  this.style.display='none';
+  document.getElementById('outcomeArea').innerHTML='<div style="font-size:.85rem;color:var(--dim);margin-bottom:6px">s_j = '+sj+' / '+M+'</div><div class="outcome-badge '+cls+'">'+outcome+'</div><br><button class="gen-btn" style="margin-top:10px" onclick="document.getElementById(\'runVerifyBtn\').style.display=\'inline-block\';document.getElementById(\'outcomeArea\').innerHTML=\'<button class=gen-btn id=runVerifyBtn>Run Verification</button>\';document.getElementById(\'barFill\').style.width=\'0%\';document.getElementById(\'runVerifyBtn\').addEventListener(\'click\',arguments.callee)">Reset</button>';
+});
+
+// ====== SCENE 6: FORGERY GAUGE ======
+function resetForgery(){document.getElementById('forgeStamp').classList.remove('show');drawGauge(0);document.getElementById('gaugeLabel').textContent='0%'}
+function drawGauge(pct){
+  const cv=document.getElementById('gaugeCanvas'),cx=cv.getContext('2d'),W=200,H=200,R=80,mx=W/2,my=H/2+10;
+  cx.clearRect(0,0,W,H);
+  cx.beginPath();cx.arc(mx,my,R,Math.PI,.0);cx.strokeStyle='rgba(255,255,255,.08)';cx.lineWidth=12;cx.stroke();
+  cx.beginPath();cx.arc(mx,my,R,Math.PI,Math.PI+Math.PI*(pct/100));cx.strokeStyle=pct<30?'var(--green)':pct<60?'var(--gold)':'var(--red)';cx.lineWidth=12;cx.lineCap='round';cx.stroke();cx.lineCap='butt';
+}
+drawGauge(0);
+document.getElementById('runForgeryBtn').addEventListener('click',function(){
+  let p=0;const target=Math.random()*8+2;
+  const iv=setInterval(()=>{p+=.5;if(p>target){clearInterval(iv);document.getElementById('forgeStamp').classList.add('show')}drawGauge(p);document.getElementById('gaugeLabel').textContent=p.toFixed(1)+'%';document.getElementById('gaugeLabel').style.color=p<30?'var(--green)':p<60?'var(--gold)':'var(--red)'},30);
+});
+</script>
+</body>
+</html>
