@@ -1,0 +1,6 @@
+trial,seed,signed_bit,forged_bit,s_j,outcome,any_accept,transferable_success
+0,2029167940,1,0,2,ZERO_ACC,1,0
+1,1342382291,0,1,2,ZERO_ACC,1,0
+2,1469265225,0,1,1,ZERO_ACC,1,0
+3,1926751965,1,0,1,ZERO_ACC,1,0
+4,1241873584,0,1,3,ZERO_ACC,1,0

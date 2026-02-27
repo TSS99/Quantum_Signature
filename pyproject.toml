@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantum-digital-signatures"
+version = "0.1.0"
+description = "A practical Gottesman-Chuang quantum digital signature protocol simulator."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "QDS Simulator" }]
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "qiskit>=1.0",
+  "qiskit-aer>=0.14",
+  "matplotlib>=3.8",
+  "pandas>=2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "jupyter>=1.0",
+]
+
+[project.scripts]
+qds = "qds.cli:app"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
